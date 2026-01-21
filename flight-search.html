@@ -538,15 +538,71 @@
             'OneTwoTrip', 'Biletix', 'S7 Airlines', 'Aeroflot'
         ];
 
+        // Airport codes mapping (Russian cities)
+        const airportCodes = {
+            'Москва': 'MOW',
+            'москва': 'MOW',
+            'Moscow': 'MOW',
+            'Санкт-Петербург': 'LED',
+            'санкт-петербург': 'LED',
+            'Saint Petersburg': 'LED',
+            'Петербург': 'LED',
+            'СПб': 'LED',
+            'Казань': 'KZN',
+            'казань': 'KZN',
+            'Сочи': 'AER',
+            'сочи': 'AER',
+            'Екатеринбург': 'SVX',
+            'екатеринбург': 'SVX',
+            'Новосибирск': 'OVB',
+            'новосибирск': 'OVB',
+            'Владивосток': 'VVO',
+            'владивосток': 'VVO',
+            'Калининград': 'KGD',
+            'калининград': 'KGD',
+            'Краснодар': 'KRR',
+            'краснодар': 'KRR',
+            'Самара': 'KUF',
+            'самара': 'KUF',
+            'Уфа': 'UFA',
+            'уфа': 'UFA',
+            'Красноярск': 'KJA',
+            'красноярск': 'KJA',
+            'Иркутск': 'IKT',
+            'иркутск': 'IKT',
+            'Хабаровск': 'KHV',
+            'хабаровск': 'KHV',
+            'Нижний Новгород': 'GOJ',
+            'нижний новгород': 'GOJ',
+            'Челябинск': 'CEK',
+            'челябинск': 'CEK'
+        };
+
+        // URLs for aggregators
+        const aggregatorURLs = {
+            'Aviasales': 'https://www.aviasales.ru/search',
+            'Skyscanner': 'https://www.skyscanner.ru/transport/flights',
+            'Kayak': 'https://www.kayak.ru/flights',
+            'Google Flights': 'https://www.google.com/travel/flights',
+            'Momondo': 'https://www.momondo.ru/flight-search',
+            'Kiwi.com': 'https://www.kiwi.com/ru/search',
+            'Ozon Travel': 'https://www.ozon.ru/travel/flights',
+            'Tutu.ru': 'https://www.tutu.ru/flights',
+            'OneTwoTrip': 'https://www.onetwotrip.com/ru/flights',
+            'Biletix': 'https://biletix.ru/flights',
+            'S7 Airlines': 'https://www.s7.ru/book',
+            'Aeroflot': 'https://www.aeroflot.ru/ru-ru/booking/flights'
+        };
+
         const airlines = [
-            { name: 'Aeroflot', code: 'SU', logo: '✈️' },
-            { name: 'S7 Airlines', code: 'S7', logo: '🛩️' },
-            { name: 'Pobeda', code: 'DP', logo: '✈️' },
-            { name: 'Ural Airlines', code: 'U6', logo: '🛫' },
-            { name: 'Utair', code: 'UT', logo: '✈️' },
-            { name: 'Rossiya Airlines', code: 'FV', logo: '🛬' },
-            { name: 'Nordwind', code: 'N4', logo: '✈️' },
-            { name: 'Red Wings', code: 'WZ', logo: '🛩️' }
+            { name: 'Aeroflot', code: 'SU', logo: '✈️', url: 'https://www.aeroflot.ru/ru-ru/booking/flights' },
+            { name: 'S7 Airlines', code: 'S7', logo: '🛩️', url: 'https://www.s7.ru/book' },
+            { name: 'Pobeda', code: 'DP', logo: '✈️', url: 'https://www.pobeda.aero/booking' },
+            { name: 'Ural Airlines', code: 'U6', logo: '🛫', url: 'https://www.uralairlines.ru/booking' },
+            { name: 'Utair', code: 'UT', logo: '✈️', url: 'https://www.utair.ru/booking' },
+            { name: 'Rossiya Airlines', code: 'FV', logo: '🛬', url: 'https://www.rossiya-airlines.com/booking' },
+            { name: 'Nordwind', code: 'N4', logo: '✈️', url: 'https://www.nordwindairlines.ru/booking' },
+            { name: 'Red Wings', code: 'WZ', logo: '🛩️', url: 'https://www.flyredwings.com/booking' }
         ];
 
         let allFlights = [];
@@ -636,6 +692,11 @@
             const flights = [];
             const origin = document.getElementById('origin').value;
             const destination = document.getElementById('destination').value;
+            const departDate = document.getElementById('departDate').value;
+            const returnDate = document.getElementById('returnDate').value;
+            const passengers = document.getElementById('passengers').value;
+            const travelClass = document.getElementById('class').value;
+            const tripType = document.querySelector('input[name="tripType"]:checked').value;
 
             for (let i = 0; i < count; i++) {
                 const airline = airlines[Math.floor(Math.random() * airlines.length)];
@@ -654,9 +715,15 @@
                     airline: airline.name,
                     airlineCode: airline.code,
                     airlineLogo: airline.logo,
+                    airlineURL: airline.url,
                     flightNumber: airline.code + (1000 + Math.floor(Math.random() * 9000)),
                     origin,
                     destination,
+                    departDate,
+                    returnDate,
+                    passengers,
+                    travelClass,
+                    tripType,
                     departTime: `${String(departHour).padStart(2, '0')}:${String(departMinute).padStart(2, '0')}`,
                     arriveTime: `${String(arriveTime.getHours()).padStart(2, '0')}:${String(arriveTime.getMinutes()).padStart(2, '0')}`,
                     duration: `${Math.floor(durationMinutes / 60)}ч ${durationMinutes % 60}м`,
@@ -776,7 +843,7 @@
                             <span class="price">${flight.price.toLocaleString()}</span>
                             <span class="currency">₽</span>
                         </div>
-                        <button class="book-btn" onclick="bookFlight('${flight.source}', '${flight.flightNumber}')">
+                        <button class="book-btn" onclick="bookFlight(${displayedFlights.indexOf(flight)})">
                             Купить билет
                         </button>
                     </div>
@@ -784,8 +851,100 @@
             `).join('');
         }
 
-        function bookFlight(source, flightNumber) {
-            alert(`Переход на сайт ${source} для бронирования рейса ${flightNumber}...\n\nВ реальном приложении здесь будет переход на сайт агрегатора или авиакомпании.`);
+        function bookFlight(flightIndex) {
+            const flight = displayedFlights[flightIndex];
+            if (!flight) return;
+
+            // Get airport codes
+            const originCode = airportCodes[flight.origin] || 'MOW';
+            const destCode = airportCodes[flight.destination] || 'LED';
+
+            // Format dates for URL (DDMM format)
+            const formatDateShort = (dateStr) => {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                return day + month;
+            };
+
+            const departDateShort = formatDateShort(flight.departDate);
+            const returnDateShort = flight.tripType === 'roundtrip' && flight.returnDate
+                ? formatDateShort(flight.returnDate)
+                : '';
+
+            // Build URL based on aggregator
+            let bookingURL;
+
+            switch(flight.source) {
+                case 'Aviasales':
+                    // Format: /search/MOW0506LED1206 (origin+departdate+dest+returndate)
+                    const aviasalesPath = flight.tripType === 'roundtrip' && returnDateShort
+                        ? `${originCode}${departDateShort}${destCode}${returnDateShort}`
+                        : `${originCode}${departDateShort}${destCode}`;
+                    bookingURL = `https://www.aviasales.ru/search/${aviasalesPath}?passengers=${flight.passengers}&class=${flight.travelClass}`;
+                    break;
+
+                case 'Skyscanner':
+                    bookingURL = `https://www.skyscanner.ru/transport/flights/${originCode}/${destCode}/${flight.departDate}/${flight.returnDate || ''}?adults=${flight.passengers}&cabinclass=${flight.travelClass}`;
+                    break;
+
+                case 'Google Flights':
+                    bookingURL = `https://www.google.com/travel/flights?q=flights+from+${originCode}+to+${destCode}+on+${flight.departDate}`;
+                    break;
+
+                case 'Kiwi.com':
+                    bookingURL = `https://www.kiwi.com/ru/search/results/${originCode}/${destCode}/${flight.departDate}/${flight.returnDate || ''}?adults=${flight.passengers}`;
+                    break;
+
+                case 'S7 Airlines':
+                    bookingURL = `https://www.s7.ru/book.html?origin=${originCode}&destination=${destCode}&date=${flight.departDate}&passengers=${flight.passengers}`;
+                    break;
+
+                case 'Aeroflot':
+                    bookingURL = `https://www.aeroflot.ru/ru-ru/booking/flights?from=${originCode}&to=${destCode}&date=${flight.departDate}&adults=${flight.passengers}`;
+                    break;
+
+                default:
+                    // Default to aggregator URL or airline URL
+                    bookingURL = aggregatorURLs[flight.source] || flight.airlineURL;
+                    break;
+            }
+
+            // Log booking details
+            console.log('Opening booking page:', {
+                source: flight.source,
+                flight: flight.flightNumber,
+                url: bookingURL,
+                codes: { origin: originCode, destination: destCode },
+                details: {
+                    from: flight.origin,
+                    to: flight.destination,
+                    date: flight.departDate,
+                    passengers: flight.passengers,
+                    class: flight.travelClass
+                }
+            });
+
+            // Show informative message before redirect
+            const message = `
+🎫 Перенаправление на ${flight.source}
+
+Детали поиска:
+✈️ Рейс: ${flight.flightNumber}
+📍 Откуда: ${flight.origin} (${originCode})
+📍 Куда: ${flight.destination} (${destCode})
+📅 Дата: ${flight.departDate}
+${flight.tripType === 'roundtrip' && flight.returnDate ? '🔄 Обратно: ' + flight.returnDate : ''}
+👥 Пассажиры: ${flight.passengers}
+💺 Класс: ${flight.travelClass}
+
+Вы будете перенаправлены на сайт ${flight.source} для завершения бронирования.
+            `.trim();
+
+            if (confirm(message + '\n\nПродолжить?')) {
+                window.open(bookingURL, '_blank');
+            }
         }
 
         // Filter and sort listeners
