@@ -426,6 +426,73 @@
                 width: 50px;
             }
         }
+
+        /* Autocomplete styles */
+        .autocomplete-wrapper {
+            position: relative;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .autocomplete-list.active {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background: #f5f5ff;
+        }
+
+        .autocomplete-item.selected {
+            background: #e8e8ff;
+        }
+
+        .autocomplete-city {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .autocomplete-details {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .autocomplete-code {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -451,11 +518,17 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="origin">Откуда</label>
-                        <input type="text" id="origin" placeholder="Москва" value="Москва" required>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="origin" placeholder="Город или аэропорт" value="Москва" required autocomplete="off">
+                            <div class="autocomplete-list" id="originAutocomplete"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="destination">Куда</label>
-                        <input type="text" id="destination" placeholder="Санкт-Петербург" value="Санкт-Петербург" required>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="destination" placeholder="Город или аэропорт" value="Санкт-Петербург" required autocomplete="off">
+                            <div class="autocomplete-list" id="destinationAutocomplete"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -538,45 +611,77 @@
             'OneTwoTrip', 'Biletix', 'S7 Airlines', 'Aeroflot'
         ];
 
-        // Airport codes mapping (Russian cities)
-        const airportCodes = {
-            'Москва': 'MOW',
-            'москва': 'MOW',
-            'Moscow': 'MOW',
-            'Санкт-Петербург': 'LED',
-            'санкт-петербург': 'LED',
-            'Saint Petersburg': 'LED',
-            'Петербург': 'LED',
-            'СПб': 'LED',
-            'Казань': 'KZN',
-            'казань': 'KZN',
-            'Сочи': 'AER',
-            'сочи': 'AER',
-            'Екатеринбург': 'SVX',
-            'екатеринбург': 'SVX',
-            'Новосибирск': 'OVB',
-            'новосибирск': 'OVB',
-            'Владивосток': 'VVO',
-            'владивосток': 'VVO',
-            'Калининград': 'KGD',
-            'калининград': 'KGD',
-            'Краснодар': 'KRR',
-            'краснодар': 'KRR',
-            'Самара': 'KUF',
-            'самара': 'KUF',
-            'Уфа': 'UFA',
-            'уфа': 'UFA',
-            'Красноярск': 'KJA',
-            'красноярск': 'KJA',
-            'Иркутск': 'IKT',
-            'иркутск': 'IKT',
-            'Хабаровск': 'KHV',
-            'хабаровск': 'KHV',
-            'Нижний Новгород': 'GOJ',
-            'нижний новгород': 'GOJ',
-            'Челябинск': 'CEK',
-            'челябинск': 'CEK'
-        };
+        // Extended cities and airports database
+        const citiesAndAirports = [
+            { city: 'Москва', code: 'MOW', airports: 'Шереметьево, Домодедово, Внуково', country: 'Россия' },
+            { city: 'Санкт-Петербург', code: 'LED', airports: 'Пулково', country: 'Россия' },
+            { city: 'Казань', code: 'KZN', airports: 'Казань', country: 'Россия' },
+            { city: 'Сочи', code: 'AER', airports: 'Адлер', country: 'Россия' },
+            { city: 'Екатеринбург', code: 'SVX', airports: 'Кольцово', country: 'Россия' },
+            { city: 'Новосибирск', code: 'OVB', airports: 'Толмачёво', country: 'Россия' },
+            { city: 'Владивосток', code: 'VVO', airports: 'Кневичи', country: 'Россия' },
+            { city: 'Калининград', code: 'KGD', airports: 'Храброво', country: 'Россия' },
+            { city: 'Краснодар', code: 'KRR', airports: 'Пашковский', country: 'Россия' },
+            { city: 'Самара', code: 'KUF', airports: 'Курумоч', country: 'Россия' },
+            { city: 'Уфа', code: 'UFA', airports: 'Уфа', country: 'Россия' },
+            { city: 'Красноярск', code: 'KJA', airports: 'Емельяново', country: 'Россия' },
+            { city: 'Иркутск', code: 'IKT', airports: 'Иркутск', country: 'Россия' },
+            { city: 'Хабаровск', code: 'KHV', airports: 'Новый', country: 'Россия' },
+            { city: 'Нижний Новгород', code: 'GOJ', airports: 'Стригино', country: 'Россия' },
+            { city: 'Челябинск', code: 'CEK', airports: 'Баландино', country: 'Россия' },
+            { city: 'Ростов-на-Дону', code: 'ROV', airports: 'Платов', country: 'Россия' },
+            { city: 'Воронеж', code: 'VOZ', airports: 'Чертовицкое', country: 'Россия' },
+            { city: 'Волгоград', code: 'VOG', airports: 'Гумрак', country: 'Россия' },
+            { city: 'Пермь', code: 'PEE', airports: 'Большое Савино', country: 'Россия' },
+            { city: 'Омск', code: 'OMS', airports: 'Омск', country: 'Россия' },
+            { city: 'Тюмень', code: 'TJM', airports: 'Рощино', country: 'Россия' },
+            { city: 'Томск', code: 'TOF', airports: 'Богашёво', country: 'Россия' },
+            { city: 'Барнаул', code: 'BAX', airports: 'Барнаул', country: 'Россия' },
+            { city: 'Кемерово', code: 'KEJ', airports: 'Кемерово', country: 'Россия' },
+            { city: 'Анапа', code: 'AAQ', airports: 'Витязево', country: 'Россия' },
+            { city: 'Симферополь', code: 'SIP', airports: 'Симферополь', country: 'Крым' },
+            { city: 'Минеральные Воды', code: 'MRV', airports: 'Минеральные Воды', country: 'Россия' },
+            { city: 'Мурманск', code: 'MMK', airports: 'Мурманск', country: 'Россия' },
+            { city: 'Якутск', code: 'YKS', airports: 'Якутск', country: 'Россия' },
+            { city: 'Магадан', code: 'GDX', airports: 'Сокол', country: 'Россия' },
+            { city: 'Петропавловск-Камчатский', code: 'PKC', airports: 'Елизово', country: 'Россия' },
+            { city: 'Южно-Сахалинск', code: 'UUS', airports: 'Хомутово', country: 'Россия' },
+            { city: 'Архангельск', code: 'ARH', airports: 'Талаги', country: 'Россия' },
+
+            // Популярные зарубежные направления
+            { city: 'Стамбул', code: 'IST', airports: 'Ататюрк, Сабиха Гёкчен', country: 'Турция' },
+            { city: 'Анталья', code: 'AYT', airports: 'Анталья', country: 'Турция' },
+            { city: 'Дубай', code: 'DXB', airports: 'Дубай', country: 'ОАЭ' },
+            { city: 'Бангкок', code: 'BKK', airports: 'Суварнабхуми', country: 'Таиланд' },
+            { city: 'Пхукет', code: 'HKT', airports: 'Пхукет', country: 'Таиланд' },
+            { city: 'Париж', code: 'PAR', airports: 'Шарль де Голль, Орли', country: 'Франция' },
+            { city: 'Лондон', code: 'LON', airports: 'Хитроу, Гатвик', country: 'Великобритания' },
+            { city: 'Барселона', code: 'BCN', airports: 'Эль-Прат', country: 'Испания' },
+            { city: 'Рим', code: 'ROM', airports: 'Фьюмичино', country: 'Италия' },
+            { city: 'Милан', code: 'MIL', airports: 'Мальпенса, Линате', country: 'Италия' },
+            { city: 'Прага', code: 'PRG', airports: 'Вацлав Гавел', country: 'Чехия' },
+            { city: 'Вена', code: 'VIE', airports: 'Швехат', country: 'Австрия' },
+            { city: 'Берлин', code: 'BER', airports: 'Бранденбург', country: 'Германия' },
+            { city: 'Амстердам', code: 'AMS', airports: 'Схипхол', country: 'Нидерланды' },
+            { city: 'Тбилиси', code: 'TBS', airports: 'Шота Руставели', country: 'Грузия' },
+            { city: 'Ереван', code: 'EVN', airports: 'Звартноц', country: 'Армения' },
+            { city: 'Баку', code: 'GYD', airports: 'Гейдар Алиев', country: 'Азербайджан' },
+            { city: 'Минск', code: 'MSQ', airports: 'Минск-2', country: 'Беларусь' },
+            { city: 'Алматы', code: 'ALA', airports: 'Алматы', country: 'Казахстан' },
+            { city: 'Ташкент', code: 'TAS', airports: 'Ташкент', country: 'Узбекистан' },
+            { city: 'Нью-Йорк', code: 'NYC', airports: 'JFK, LaGuardia', country: 'США' },
+            { city: 'Лос-Анджелес', code: 'LAX', airports: 'LAX', country: 'США' },
+            { city: 'Токио', code: 'TYO', airports: 'Нарита, Ханеда', country: 'Япония' },
+            { city: 'Сеул', code: 'SEL', airports: 'Инчхон', country: 'Южная Корея' },
+            { city: 'Пекин', code: 'BJS', airports: 'Шоуду, Дасин', country: 'Китай' }
+        ];
+
+        // Airport codes mapping (for backward compatibility)
+        const airportCodes = {};
+        citiesAndAirports.forEach(item => {
+            airportCodes[item.city] = item.code;
+            airportCodes[item.city.toLowerCase()] = item.code;
+        });
 
         // URLs for aggregators
         const aggregatorURLs = {
@@ -616,6 +721,113 @@
 
         document.getElementById('departDate').valueAsDate = tomorrow;
         document.getElementById('returnDate').valueAsDate = weekLater;
+
+        // Autocomplete functionality
+        function setupAutocomplete(inputId, listId) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(listId);
+            let selectedIndex = -1;
+            let filteredItems = [];
+
+            input.addEventListener('input', (e) => {
+                const value = e.target.value.toLowerCase().trim();
+
+                if (value.length < 1) {
+                    list.classList.remove('active');
+                    return;
+                }
+
+                // Filter cities and airports
+                filteredItems = citiesAndAirports.filter(item => {
+                    return item.city.toLowerCase().includes(value) ||
+                           item.code.toLowerCase().includes(value) ||
+                           item.airports.toLowerCase().includes(value) ||
+                           item.country.toLowerCase().includes(value);
+                });
+
+                if (filteredItems.length === 0) {
+                    list.classList.remove('active');
+                    return;
+                }
+
+                // Render autocomplete list
+                list.innerHTML = filteredItems.slice(0, 8).map((item, index) => `
+                    <div class="autocomplete-item" data-index="${index}">
+                        <div class="autocomplete-city">${item.city}</div>
+                        <div class="autocomplete-details">
+                            <span class="autocomplete-code">${item.code}</span>
+                            ${item.airports} • ${item.country}
+                        </div>
+                    </div>
+                `).join('');
+
+                list.classList.add('active');
+                selectedIndex = -1;
+
+                // Add click handlers to items
+                list.querySelectorAll('.autocomplete-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const index = parseInt(item.dataset.index);
+                        selectItem(index);
+                    });
+                });
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (!list.classList.contains('active')) return;
+
+                const items = list.querySelectorAll('.autocomplete-item');
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateSelection(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateSelection(items);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && selectedIndex < filteredItems.length) {
+                        selectItem(selectedIndex);
+                    }
+                } else if (e.key === 'Escape') {
+                    list.classList.remove('active');
+                    selectedIndex = -1;
+                }
+            });
+
+            function updateSelection(items) {
+                items.forEach((item, index) => {
+                    if (index === selectedIndex) {
+                        item.classList.add('selected');
+                        item.scrollIntoView({ block: 'nearest' });
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            }
+
+            function selectItem(index) {
+                if (index >= 0 && index < filteredItems.length) {
+                    input.value = filteredItems[index].city;
+                    list.classList.remove('active');
+                    selectedIndex = -1;
+                }
+            }
+
+            // Close autocomplete when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !list.contains(e.target)) {
+                    list.classList.remove('active');
+                    selectedIndex = -1;
+                }
+            });
+        }
+
+        // Setup autocomplete for both inputs
+        setupAutocomplete('origin', 'originAutocomplete');
+        setupAutocomplete('destination', 'destinationAutocomplete');
 
         // Trip type toggle
         document.querySelectorAll('input[name="tripType"]').forEach(radio => {
